@@ -6,7 +6,9 @@ import {
   Icon,
   FormGroup,
   FormControl,
-  ControlLabel
+  ControlLabel,
+  validate,
+  Form
 } from 'modules/common/components';
 
 const propTypes = {
@@ -26,17 +28,18 @@ class CompanyForm extends React.Component {
 
   addCompany(e) {
     e.preventDefault();
-
-    this.props.addCompany({
-      doc: {
-        name: document.getElementById('company-name').value,
-        website: document.getElementById('company-website').value
-      },
-
-      callback: () => {
-        this.context.closeModal();
-      }
-    });
+    validate('asd');
+    //
+    // this.props.addCompany({
+    //   doc: {
+    //     name: document.getElementById('company-name').value,
+    //     website: document.getElementById('company-website').value
+    //   },
+    //
+    //   callback: () => {
+    //     this.context.closeModal();
+    //   }
+    // });
   }
 
   render() {
@@ -45,15 +48,23 @@ class CompanyForm extends React.Component {
     };
 
     return (
-      <form onSubmit={this.addCompany}>
+      <Form onSubmit={this.addCompany} id="asd">
         <FormGroup>
           <ControlLabel>Name</ControlLabel>
-          <FormControl id="company-name" type="text" required />
+          <FormControl
+            id="company-name"
+            type="text"
+            validation={{ required: true, email: true, minLength: 10 }}
+          />
         </FormGroup>
 
         <FormGroup>
           <ControlLabel>Website</ControlLabel>
-          <FormControl id="company-website" type="text" required />
+          <FormControl
+            id="company-website"
+            type="text"
+            validation={{ required: true }}
+          />
         </FormGroup>
 
         <Modal.Footer>
@@ -67,7 +78,7 @@ class CompanyForm extends React.Component {
             Save
           </Button>
         </Modal.Footer>
-      </form>
+      </Form>
     );
   }
 }
