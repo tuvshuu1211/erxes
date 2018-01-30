@@ -20,7 +20,7 @@ import Tags from './Tags';
 import FilterableList from './filterableList/FilterableList';
 import DropdownToggle from './DropdownToggle';
 import ConversationList from './conversationList/ConversationList';
-import { FormControl, ControlLabel, FormGroup } from './form';
+import { FormControl, ControlLabel, FormGroup, validate, Form } from './form';
 import TextDivider from './TextDivider';
 import CountsByTag from './CountsByTag';
 import FilterByParams from './FilterByParams';
@@ -33,6 +33,8 @@ import ConfirmDialog from './ConfirmDialog';
 const pagination = {};
 
 export {
+  Form,
+  validate,
   Attachment,
   ActionButtons,
   NameCard,

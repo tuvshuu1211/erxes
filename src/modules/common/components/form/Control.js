@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { validateField } from './';
 import {
   Input,
   Select,
@@ -29,7 +30,8 @@ const propTypes = {
     'checkbox',
     'textarea',
     'input'
-  ])
+  ]),
+  validation: PropTypes.object
 };
 
 const defaultProps = {
@@ -48,13 +50,37 @@ const renderElement = (Element, attributes, type, child) => {
 };
 
 class FormControl extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      errMsg: ''
+    };
+
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  handleChange(e) {
+    const value = e.target.value;
+    const { validation } = this.props;
+
+    const msg = validateField(value, validation);
+
+    this.setState({ errMsg: msg });
+
+    if (this.props.onChange) {
+      this.props.onChange();
+    }
+    console.log(this.state);
+  }
+
   render() {
     const props = this.props;
     const childNode = props.children;
     const elementType = props.componentClass;
 
     const attributes = {
-      onChange: props.onChange,
+      onChange: this.handleChange,
       onClick: props.onClick,
       value: props.value,
       defaultValue: props.defaultValue,
@@ -64,14 +90,25 @@ class FormControl extends React.Component {
       name: props.name,
       round: props.round,
       required: props.required,
-      id: props.id
+      id: props.id,
+      validation: props.validation
     };
+    const { errMsg } = this.state;
+    let errorMessage = null;
+    console.log(this);
+
+    if (errMsg !== '') {
+      errorMessage = <p>{errMsg}</p>;
+    }
 
     if (elementType === 'select') {
       return (
-        <SelectWrapper>
-          <Select {...attributes}>{childNode}</Select>
-        </SelectWrapper>
+        <div>
+          <SelectWrapper>
+            <Select {...attributes}>{childNode}</Select>
+          </SelectWrapper>
+          {errorMessage}
+        </div>
       );
     }
 
@@ -84,10 +121,19 @@ class FormControl extends React.Component {
     }
 
     if (elementType === 'textarea') {
-      return <Textarea {...attributes} />;
+      return (
+        <div>
+          <Textarea {...attributes} />
+          {errorMessage}
+        </div>
+      );
     }
 
-    return <Input {...attributes} />;
+    return (
+      <div>
+        <Input {...attributes} /> {errorMessage}
+      </div>
+    );
   }
 }
 
