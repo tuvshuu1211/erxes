@@ -1,3 +1,5 @@
+import _ from 'underscore';
+
 export const generateParams = queryParams => ({
   limit: queryParams.limit || 10,
   channelId: queryParams.channelId,
@@ -11,3 +13,11 @@ export const generateParams = queryParams => ({
   startDate: queryParams.startDate,
   endDate: queryParams.endDate
 });
+
+export const extractEntries = mention => {
+  const entries = mention._root.entries;
+  const keys = _.map(entries, entry => entry[0]);
+  const values = _.map(entries, entry => entry[1]);
+
+  return _.object(keys, values);
+};

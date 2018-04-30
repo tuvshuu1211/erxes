@@ -9,118 +9,13 @@ import {
   getDefaultKeyBinding,
   Modifier
 } from 'draft-js';
-import strip from 'strip';
-import _ from 'underscore';
-import highlighter from 'fuzzysearch-highlight';
 import {
   ErxesEditor,
   toHTML,
   createStateFromHTML
 } from 'modules/common/components/editor/Editor';
-
-import { ResponseSuggestions, ResponseSuggestionItem } from '../styles';
-
-const MentionEntry = props => {
-  const { mention, theme, searchValue, ...parentProps } = props; // eslint-disable-line
-
-  return (
-    <div {...parentProps}>
-      <div className="mentionSuggestionsEntryContainer">
-        <div className="mentionSuggestionsEntryContainerLeft">
-          <img
-            alt={mention.get('name')}
-            role="presentation"
-            src={mention.get('avatar') || '/images/avatar-colored.svg'}
-            className="mentionSuggestionsEntryAvatar"
-          />
-        </div>
-
-        <div className="mentionSuggestionsEntryContainerRight">
-          <div className="mentionSuggestionsEntryText">
-            {mention.get('name')}
-          </div>
-
-          <div className="mentionSuggestionsEntryTitle">
-            {mention.get('title')}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const extractEntries = mention => {
-  const entries = mention._root.entries;
-  const keys = _.map(entries, entry => entry[0]);
-  const values = _.map(entries, entry => entry[1]);
-
-  return _.object(keys, values);
-};
-
-// response templates
-class TemplateList extends React.Component {
-  normalizeIndex(selectedIndex, max) {
-    let index = selectedIndex % max;
-
-    if (index < 0) {
-      index += max;
-    }
-
-    return index;
-  }
-
-  render() {
-    const { suggestionsState, onSelect } = this.props;
-
-    const { selectedIndex, searchText, templates } = suggestionsState;
-
-    if (!templates) {
-      return null;
-    }
-
-    const normalizedIndex = this.normalizeIndex(
-      selectedIndex,
-      templates.length
-    );
-
-    return (
-      <ResponseSuggestions>
-        {templates.map((template, index) => {
-          const style = {};
-
-          if (normalizedIndex === index) {
-            style.backgroundColor = '#F6F8FB';
-          }
-
-          return (
-            <ResponseSuggestionItem
-              key={template._id}
-              onClick={() => onSelect(index)}
-              style={style}
-            >
-              <span
-                style={{ fontWeight: 'bold' }}
-                dangerouslySetInnerHTML={{
-                  __html: highlighter(searchText, template.name)
-                }}
-              />
-              <span
-                dangerouslySetInnerHTML={{
-                  __html: highlighter(searchText, strip(template.content))
-                }}
-              />
-            </ResponseSuggestionItem>
-          );
-        }, this)}
-      </ResponseSuggestions>
-    );
-  }
-}
-
-TemplateList.propTypes = {
-  suggestionsState: PropTypes.object,
-  onSelect: PropTypes.func
-};
+import { TemplateList, MentionEntry } from './';
+import { extractEntries } from '../../utils';
 
 export default class Editor extends Component {
   constructor(props) {
@@ -311,7 +206,7 @@ export default class Editor extends Component {
     const finalMentions = [];
 
     // replace mention content
-    _.each(this.state.collectedMentions, m => {
+    this.state.collectedMentions.forEach(m => {
       const toFind = `@${m.name}`;
       const re = new RegExp(toFind, 'g');
 
@@ -329,7 +224,7 @@ export default class Editor extends Component {
     });
 
     // send mentioned user to parent
-    this.props.onAddMention(_.pluck(finalMentions, '_id'));
+    this.props.onAddMention(finalMentions.map(mention => mention._id));
 
     return content;
   }
@@ -350,7 +245,7 @@ export default class Editor extends Component {
       }
 
       // call parent's method to save content
-      this.props.onShifEnter();
+      this.props.addMessage();
 
       // clear content
       const state = this.state.editorState;
@@ -406,7 +301,7 @@ export default class Editor extends Component {
 Editor.propTypes = {
   onChange: PropTypes.func,
   onAddMention: PropTypes.func,
-  onShifEnter: PropTypes.func,
+  addMessage: PropTypes.func,
   showMentions: PropTypes.bool,
   responseTemplate: PropTypes.string,
   responseTemplates: PropTypes.array,

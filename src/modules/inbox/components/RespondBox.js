@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { Button, Icon, Tip, FormControl } from 'modules/common/components';
 import { Alert, uploadHandler } from 'modules/common/utils';
 import { ResponseTemplate } from '../containers';
-import Editor from './Editor';
+import { Editor } from './editor/';
 import {
   RespondBoxStyled,
   EditorActions,
@@ -39,20 +39,6 @@ class RespondBox extends Component {
       content: '',
       mentionedUserIds: []
     };
-
-    // on editor content change
-    this.onEditorContentChange = this.onEditorContentChange.bind(this);
-
-    // on new members mention
-    this.onAddMention = this.onAddMention.bind(this);
-
-    // on shift + enter press in editor
-    this.onShifEnter = this.onShifEnter.bind(this);
-    this.onSend = this.onSend.bind(this);
-    this.toggleForm = this.toggleForm.bind(this);
-    this.hideMask = this.hideMask.bind(this);
-    this.handleFileInput = this.handleFileInput.bind(this);
-    this.onSelectTemplate = this.onSelectTemplate.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -91,7 +77,7 @@ class RespondBox extends Component {
 
     this.addMessage();
 
-    // redrawing editor after sned button, so editor content will be reseted
+    // redrawing editor after send button, so editor content will be reseted
     this.setState({ editorKey: `${this.state.editorKey}Key` });
   }
 
@@ -102,11 +88,6 @@ class RespondBox extends Component {
       // set attachment from response template files
       attachments: responseTemplate.files || []
     });
-  }
-
-  // on shift + enter press in editor
-  onShifEnter() {
-    this.addMessage();
   }
 
   handleFileInput(e) {
@@ -143,16 +124,13 @@ class RespondBox extends Component {
     });
   }
 
-  cleanText(text) {
-    return text.replace(/&nbsp;/g, ' ');
-  }
-
   addMessage() {
     const { conversation, sendMessage } = this.props;
     const { isInternal, attachments, content, mentionedUserIds } = this.state;
+
     const message = {
       conversationId: conversation._id,
-      content: this.cleanText(content) || ' ',
+      content: content.replace(/&nbsp;/g, ' ') || ' ',
       internal: isInternal,
       attachments,
       mentionedUserIds
@@ -175,34 +153,31 @@ class RespondBox extends Component {
   }
 
   toggleForm() {
-    this.setState({
-      isInternal: !this.state.isInternal
-    });
+    this.setState({ isInternal: !this.state.isInternal });
   }
 
-  renderIncicator() {
-    const attachments = this.state.attachments;
-    if (attachments.length > 0) {
-      return (
-        <AttachmentIndicator>
-          {attachments.map(attachment => (
-            <Attachment key={attachment.name}>
-              <AttachmentThumb>
-                {attachment.type.startsWith('image') && (
-                  <PreviewImg
-                    style={{ backgroundImage: `url('${attachment.url}')` }}
-                  />
-                )}
-              </AttachmentThumb>
-              <FileName>{attachment.name}</FileName>
-              <div>({Math.round(attachment.size / 1000)}kB)</div>
-            </Attachment>
-          ))}
-        </AttachmentIndicator>
-      );
-    }
+  renderIndicator() {
+    const { attachments } = this.state;
 
-    return null;
+    if (attachments.length === 0) return null;
+
+    return (
+      <AttachmentIndicator>
+        {attachments.map(attachment => (
+          <Attachment key={attachment.name}>
+            <AttachmentThumb>
+              {attachment.type.startsWith('image') && (
+                <PreviewImg
+                  style={{ backgroundImage: `url('${attachment.url}')` }}
+                />
+              )}
+            </AttachmentThumb>
+            <FileName>{attachment.name}</FileName>
+            <div>({Math.round(attachment.size / 1000)}kB)</div>
+          </Attachment>
+        ))}
+      </AttachmentIndicator>
+    );
   }
 
   renderMask() {
@@ -210,7 +185,7 @@ class RespondBox extends Component {
 
     if (this.state.isInactive) {
       return (
-        <Mask onClick={this.hideMask}>
+        <Mask onClick={() => this.hideMask()}>
           {__(
             'Customer is offline Click to hide and send messages and they will receive them the next time they are online'
           )}
@@ -221,19 +196,19 @@ class RespondBox extends Component {
     return null;
   }
 
-  render() {
-    const { isInternal, responseTemplate } = this.state;
-    const { responseTemplates, conversation } = this.props;
+  renderButton() {
+    const { conversation } = this.props;
     const { __ } = this.context;
+    const { content, attachments } = this.state;
 
     const integration = conversation.integration || {};
 
-    const Buttons = (
+    return (
       <EditorActions>
         <FormControl
           className="toggle-message"
           componentClass="checkbox"
-          onChange={this.toggleForm}
+          onChange={() => this.toggleForm()}
         >
           {__('Internal note')}
         </FormControl>
@@ -241,19 +216,19 @@ class RespondBox extends Component {
         <Tip text={__('Attach file')}>
           <label>
             <Icon icon="upload-2" />
-            <input type="file" onChange={this.handleFileInput} />
+            <input type="file" onChange={e => this.handleFileInput(e)} />
           </label>
         </Tip>
 
         <ResponseTemplate
           brandId={integration.brandId}
-          attachments={this.state.attachments}
-          content={this.state.content}
-          onSelect={this.onSelectTemplate}
+          attachments={attachments}
+          content={content}
+          onSelect={template => this.onSelectTemplate(template)}
         />
 
         <Button
-          onClick={this.onSend}
+          onClick={e => this.onSend(e)}
           btnStyle="success"
           size="small"
           icon="send"
@@ -262,15 +237,17 @@ class RespondBox extends Component {
         </Button>
       </EditorActions>
     );
+  }
 
-    let type = 'message';
+  render() {
+    const { isInternal, responseTemplate } = this.state;
+    const { responseTemplates } = this.props;
+    const { __ } = this.context;
 
-    if (isInternal) {
-      type = 'note';
-    }
-
-    let placeholder = __(
-      `To send your ${type} press Enter and Shift + Enter to add a new line`
+    const placeholder = __(
+      `To send your ${
+        isInternal ? 'note' : 'message'
+      } press Enter and Shift + Enter to add a new line`
     );
 
     return (
@@ -282,19 +259,19 @@ class RespondBox extends Component {
         >
           <Editor
             key={this.state.editorKey}
-            onChange={this.onEditorContentChange}
-            onAddMention={this.onAddMention}
-            onShifEnter={this.onShifEnter}
+            onChange={content => this.onEditorContentChange(content)}
+            onAddMention={userIds => this.onAddMention(userIds)}
+            addMessage={() => this.addMessage()}
             placeholder={placeholder}
             mentions={this.props.teamMembers}
             showMentions={isInternal}
             responseTemplate={responseTemplate}
             responseTemplates={responseTemplates}
-            handleFileInput={this.handleFileInput}
+            handleFileInput={e => this.handleFileInput(e)}
           />
 
-          {this.renderIncicator()}
-          {Buttons}
+          {this.renderIndicator()}
+          {this.renderButton()}
         </RespondBoxStyled>
       </MaskWrapper>
     );
