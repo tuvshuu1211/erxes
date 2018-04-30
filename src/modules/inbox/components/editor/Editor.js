@@ -32,9 +32,6 @@ export default class Editor extends Component {
       mentionPrefix: '@'
     });
 
-    this.onChange = this.onChange.bind(this);
-    this.keyBindingFn = this.keyBindingFn.bind(this);
-    this.onSearchChange = this.onSearchChange.bind(this);
     this.onAddMention = this.onAddMention.bind(this);
     this.getContent = this.getContent.bind(this);
 
@@ -42,8 +39,6 @@ export default class Editor extends Component {
     this.onTemplatesStateChange = this.onTemplatesStateChange.bind(this);
     this.onSelectTemplate = this.onSelectTemplate.bind(this);
     this.onArrow = this.onArrow.bind(this);
-    this.onUpArrow = this.onUpArrow.bind(this);
-    this.onDownArrow = this.onDownArrow.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -141,7 +136,7 @@ export default class Editor extends Component {
   }
 
   onArrow(e, nudgeAmount) {
-    let templatesState = this.getTemplatesState(false);
+    const templatesState = this.getTemplatesState(false);
 
     if (!templatesState) {
       return;
@@ -269,21 +264,21 @@ export default class Editor extends Component {
 
     const pluginContent = (
       <MentionSuggestions
-        onSearchChange={this.onSearchChange}
+        onSearchChange={value => this.onSearchChange(value)}
         suggestions={this.props.showMentions ? this.state.suggestions : []}
         entryComponent={MentionEntry}
-        onAddMention={this.onAddMention}
-        onChange={this.onChange}
+        onAddMention={object => this.onAddMention(object)}
+        onChange={state => this.onChange(state)}
       />
     );
 
     const props = {
       ...this.props,
       editorState: this.state.editorState,
-      onChange: this.onChange,
-      keyBindingFn: this.keyBindingFn,
-      onUpArrow: this.onUpArrow,
-      onDownArrow: this.onDownArrow,
+      onChange: state => this.onChange(state),
+      keyBindingFn: e => this.keyBindingFn(e),
+      onUpArrow: e => this.onUpArrow(e),
+      onDownArrow: e => this.onDownArrow(e),
       handleFileInput: this.props.handleFileInput,
       plugins,
       pluginContent
