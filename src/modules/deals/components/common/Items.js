@@ -34,7 +34,9 @@ const Item = styled.li`
 `;
 
 class Items extends React.Component {
-  renderItem(item, uppercase, color, index) {
+  renderItem(item, index) {
+    const { uppercase, color } = this.props;
+
     return (
       <Item uppercase={uppercase} key={index} color={color}>
         {item.name || renderFullName(item)}
@@ -43,10 +45,7 @@ class Items extends React.Component {
   }
 
   renderItems(items) {
-    const { uppercase, color } = this.props;
-    return items.map((item, index) =>
-      this.renderItem(item, uppercase, color, index)
-    );
+    return items.map((item, index) => this.renderItem(item, index));
   }
 
   render() {
