@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Formsy, { addValidationRule, withFormsy } from 'formsy-react';
 import PropTypes from 'prop-types';
 import {
   FormGroup,
@@ -17,6 +18,48 @@ const contextTypes = {
   closeModal: PropTypes.func.isRequired
 };
 
+class Input extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.changeValue = this.changeValue.bind(this);
+  }
+
+  changeValue(event) {
+    this.props.setValue(event.currentTarget.value);
+  }
+
+  render() {
+    const error = this.props.isPristine() ? null : this.props.getErrorMessage();
+
+    console.log(this.props.getErrorMessage());
+
+    return (
+      <div>
+        <input
+          onChange={this.changeValue}
+          type="text"
+          value={this.props.getValue() || ''}
+        />
+        <span>{error}</span>
+      </div>
+    );
+  }
+}
+
+Input.propTypes = {
+  getValue: PropTypes.func,
+  setValue: PropTypes.func,
+  getErrorMessage: PropTypes.func,
+  isPristine: PropTypes.func
+};
+
+const InputWithFormsy = withFormsy(Input);
+
+addValidationRule('isValue', function(values, value) {
+  return Boolean(value);
+});
+
 class BrandForm extends Component {
   constructor(props) {
     super(props);
@@ -25,16 +68,8 @@ class BrandForm extends Component {
     this.save = this.save.bind(this);
   }
 
-  save(e) {
-    e.preventDefault();
-
-    this.props.save(
-      this.generateDoc(),
-      () => {
-        this.context.closeModal();
-      },
-      this.props.brand
-    );
+  save(values) {
+    console.log(values);
   }
 
   generateDoc() {
@@ -53,12 +88,12 @@ class BrandForm extends Component {
       <div>
         <FormGroup>
           <ControlLabel>Name</ControlLabel>
-
-          <FormControl
-            id="brand-name"
+          <InputWithFormsy
+            name="name"
             defaultValue={object.name}
             type="text"
-            required
+            validations="isValue"
+            validationError="Wrong value"
           />
         </FormGroup>
 
@@ -82,7 +117,7 @@ class BrandForm extends Component {
     };
 
     return (
-      <form onSubmit={this.save}>
+      <Formsy onValidSubmit={this.save}>
         {this.renderContent()}
         <ModalFooter>
           <Button
@@ -98,7 +133,7 @@ class BrandForm extends Component {
             Save
           </Button>
         </ModalFooter>
-      </form>
+      </Formsy>
     );
   }
 }
